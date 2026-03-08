@@ -14,7 +14,7 @@ import {
 import { clsx } from "clsx";
 import { MCPStatusBar } from "@/components/MCPStatusBar";
 import { ThoughtStream } from "@/components/ThoughtStream";
-import { runTask, getTasks, getAuditLog } from "@/lib/api";
+import { runTask, getTasks, getAuditLog, clearTasks } from "@/lib/api";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -27,6 +27,7 @@ export default function DashboardPage() {
     auditEntries: "0",
     hitlEvents: "0",
   });
+  const [recentTasks, setRecentTasks] = useState<any[]>([]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -43,6 +44,8 @@ export default function DashboardPage() {
         auditEntries: String((auditRes as any).entries?.length || 0),
         hitlEvents: String(hitlCount),
       });
+
+      setRecentTasks((tasksRes as any).tasks || []);
     } catch (err) {
       console.error("Failed to load stats", err);
     }
@@ -158,6 +161,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* MCP Status */}
+      <MCPStatusBar />
+
       {/* Task Runner */}
       <div className="glass border-gradient rounded-2xl p-4 sm:p-6 space-y-4 shadow-nexus-sm relative overflow-hidden">
         <div className="flex items-center gap-2 relative z-10">
@@ -224,7 +230,74 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {!taskId && (
+      {!taskId && recentTasks.length > 0 && (
+        <div className="glass border-gradient rounded-2xl p-6 space-y-4 shadow-nexus-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-nexus-amber" />
+              <h2 className="text-base font-semibold text-nexus-text">
+                Recent Project Activity
+              </h2>
+            </div>
+            <button
+              onClick={() => {
+                clearTasks().then(() => fetchStats());
+              }}
+              className="text-[10px] text-nexus-rose font-mono hover:underline uppercase tracking-widest"
+            >
+              Clear Logs
+            </button>
+          </div>
+
+          <div className="space-y-2 overflow-hidden">
+            {recentTasks.slice(0, 5).map((t) => (
+              <div
+                key={t.id}
+                className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-nexus-border/50 transition-all cursor-pointer group"
+                onClick={() => setTaskId(t.id)}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={clsx(
+                      "w-2 h-2 rounded-full",
+                      t.status === "completed"
+                        ? "bg-nexus-emerald"
+                        : t.status === "error"
+                        ? "bg-nexus-rose"
+                        : "bg-nexus-amber animate-pulse",
+                    )}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm text-nexus-text font-medium line-clamp-1">
+                      {t.task_text}
+                    </span>
+                    <span className="text-[10px] text-nexus-muted font-mono">
+                      {new Date(t.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={clsx(
+                      "text-[10px] font-mono px-2 py-0.5 rounded-full border uppercase tracking-tighter",
+                      t.status === "completed"
+                        ? "bg-nexus-emerald/10 border-nexus-emerald/30 text-nexus-emerald"
+                        : t.status === "error"
+                        ? "bg-nexus-rose/10 border-nexus-rose/30 text-nexus-rose"
+                        : "bg-nexus-amber/10 border-nexus-amber/30 text-nexus-amber",
+                    )}
+                  >
+                    {t.status}
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-nexus-muted group-hover:text-nexus-text transition-colors" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!taskId && recentTasks.length === 0 && (
         <div className="glass border-gradient rounded-2xl p-10 flex flex-col items-center justify-center text-center opacity-40 border-dashed">
           <Clock className="w-12 h-12 mb-4 text-nexus-muted" />
           <h3 className="text-lg font-bold text-nexus-text">
@@ -257,9 +330,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
-      {/* MCP Status */}
-      <MCPStatusBar />
     </div>
   );
 }

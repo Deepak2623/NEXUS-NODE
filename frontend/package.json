@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next# Production-grade multi-stage Dockerfile for Next.js Standalone\nFROM node:20.12-alpine AS base\nxt lint",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
