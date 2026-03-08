@@ -45,3 +45,11 @@ async def get_audit_log(
         "entries": response.data,
         "count": response.count or 0
     }
+
+
+@router.delete("/audit")
+async def purge_audit_chain():
+    """Wipe the entire audit chain."""
+    from stores.task_store import clear_audit_log
+    await clear_audit_log()
+    return {"status": "audit_chain_purged"}

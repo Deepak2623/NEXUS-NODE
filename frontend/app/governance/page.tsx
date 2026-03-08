@@ -22,6 +22,7 @@ import {
   getTasks,
   deleteTask,
   clearTasks,
+  clearAuditLog,
 } from "@/lib/api";
 
 interface AuditEntry {
@@ -97,11 +98,17 @@ export default function GovernancePage() {
 
   async function handleHITL(taskId: string, action: "approve" | "reject") {
     try {
-      if (action === "approve") await approveHITL(taskId);
-      else await rejectHITL(taskId);
+      if (action === "approve") {
+        await approveHITL(taskId);
+        addToast("Action approved", "success");
+      } else {
+        await rejectHITL(taskId);
+        addToast("Action rejected by user", "error");
+      }
       await fetchEverything(false);
     } catch (err) {
       console.error("HITL action failed", err);
+      addToast("HITL action failed", "error");
     }
   }
 
@@ -124,12 +131,38 @@ export default function GovernancePage() {
     )
       return;
     try {
-      await clearTasks();
+      setLoading(true);
+      await Promise.all([clearTasks(), clearAuditLog()]);
+      setPage(1);
+      setTaskPage(1);
       await fetchEverything(false);
-      addToast("All task history purged", "success");
+      addToast("All governance data purged", "success");
     } catch (err) {
       console.error("Clear all failed", err);
       addToast("Failed to purge — check console", "error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleClearAudit() {
+    if (
+      !confirm(
+        "Are you sure you want to permanently delete the entire Atomic Audit Chain?",
+      )
+    )
+      return;
+    try {
+      setLoading(true);
+      await clearAuditLog();
+      setPage(1);
+      await fetchEverything(false);
+      addToast("Audit chain purged", "success");
+    } catch (err) {
+      console.error("Clear audit failed", err);
+      addToast("Failed to purge audit — check console", "error");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -365,6 +398,12 @@ export default function GovernancePage() {
           <h2 className="text-lg font-bold text-nexus-text">
             Atomic Audit Chain
           </h2>
+          <button
+            onClick={handleClearAudit}
+            className="ml-auto flex items-center gap-2 px-3 py-1 rounded-lg text-[10px] bg-nexus-muted/5 border border-nexus-muted/20 text-nexus-muted hover:bg-nexus-rose/10 hover:text-nexus-rose hover:border-nexus-rose/30 transition-all font-bold"
+          >
+            <Trash2 className="w-3 h-3" /> Clear Chain
+          </button>
         </div>
 
         <div className="glass rounded-2xl overflow-hidden border border-nexus-border shadow-nexus-md">

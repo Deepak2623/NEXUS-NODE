@@ -42,7 +42,7 @@ async def approve_hitl(task_id: str, body: HITLDecision) -> dict[str, str]:
     logger.info("hitl_approved", task_id=task_id, actor=body.actor, reason=body.reason)
     await log_audit_event(
         task_id=task_id,
-        node="hitl_gate",
+        node="HITL_PERMISSION_GRANTED",
         scrubbed_input={"decision": "approve", "actor": body.actor},
         scrubbed_output={"approved": True},
         pii_flags=[],
@@ -68,7 +68,7 @@ async def reject_hitl(task_id: str, body: HITLDecision) -> dict[str, str]:
     logger.info("hitl_rejected", task_id=task_id, actor=body.actor, reason=body.reason)
     await log_audit_event(
         task_id=task_id,
-        node="hitl_gate",
+        node="HITL_PERMISSION_DENIED",
         scrubbed_input={"decision": "reject", "actor": body.actor},
         scrubbed_output={"approved": False},
         pii_flags=[],

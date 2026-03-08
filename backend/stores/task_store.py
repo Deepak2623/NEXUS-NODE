@@ -123,13 +123,22 @@ async def delete_task(task_id: str) -> None:
     logger.info("task_deleted", task_id=task_id)
 
 
+async def clear_audit_log() -> None:
+    """Delete ALL audit log records from the database."""
+    client = get_supabase_client()
+    # Use a filter that matches all rows (created_at not null is safe)
+    await asyncio.to_thread(client.table("audit_log").delete().not_.is_("created_at", "null").execute)
+    logger.warning("audit_log_purged")
+
+
 async def clear_tasks() -> None:
     """Delete ALL task records and ALL audit logs from the database (Atomic Purge)."""
+    # Wipe audit log first to avoid orphaned references if any exist (though they shouldn't)
+    await clear_audit_log()
+    
     client = get_supabase_client()
-    # Wipe audit log first
-    await asyncio.to_thread(client.table("audit_log").delete().neq("node", "non_existent").execute)
     # Wipe tasks
-    await asyncio.to_thread(client.table(_TABLE).delete().neq("status", "non_existent").execute)
+    await asyncio.to_thread(client.table(_TABLE).delete().not_.is_("created_at", "null").execute)
     logger.warning("all_governance_data_purged")
 
 

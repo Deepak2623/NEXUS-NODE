@@ -140,7 +140,7 @@ def governed(node_name: str) -> Callable[[F], F]:
                         "hitl_approved": False,
                         "status": "completed",
                         "error": "Task was REJECTED by human.",
-                        "messages": [AIMessage(content="I cannot proceed; the requested action was rejected by the supervisor.")],
+                        "messages": [AIMessage(content="I cannot proceed; the requested action was rejected by the user.")],
                         "node_status": {**state.get("node_status", {}), node_name: "done"}
                     }
                 

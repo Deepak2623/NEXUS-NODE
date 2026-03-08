@@ -140,3 +140,7 @@ export async function deleteTask(taskId: string) {
 export async function clearTasks() {
   return apiFetch("/tasks", { method: "DELETE" });
 }
+
+export async function clearAuditLog() {
+  return apiFetch("/audit", { method: "DELETE" });
+}
