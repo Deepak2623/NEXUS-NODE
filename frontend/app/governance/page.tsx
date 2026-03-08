@@ -242,11 +242,11 @@ export default function GovernancePage() {
             <div className="lg:col-span-2 glass rounded-2xl p-12 text-center opacity-40">
               <Clock className="w-8 h-8 mx-auto mb-2 text-nexus-muted" />
               <p className="text-sm font-mono tracking-tight">
-                No task history found.
+                No task history found {taskPage > 1 && `on page ${taskPage}`}.
               </p>
             </div>
           ) : (
-            tasks.slice(0, 10).map((task) => (
+            tasks.map((task) => (
               <div
                 key={task.id}
                 className="glass border-gradient rounded-2xl p-4 flex flex-col gap-3 group relative overflow-hidden"

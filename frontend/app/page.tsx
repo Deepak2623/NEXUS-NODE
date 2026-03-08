@@ -28,6 +28,7 @@ export default function DashboardPage() {
     hitlEvents: "0",
   });
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -250,7 +251,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-2 overflow-hidden">
-            {recentTasks.slice(0, 5).map((t) => (
+            {recentTasks.map((t) => (
               <div
                 key={t.id}
                 className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-nexus-border/50 transition-all cursor-pointer group"
@@ -307,6 +308,33 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Activity Pagination */}
+          <div className="flex items-center justify-between px-1 text-[10px] font-mono font-bold uppercase tracking-widest text-nexus-muted pt-2 border-t border-nexus-border/40">
+            <span>Activity Page {currentPage}</span>
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentPage(Math.max(1, currentPage - 1));
+                }}
+                disabled={currentPage === 1}
+                className="px-2 py-1 rounded border border-nexus-border hover:bg-white/5 transition-all disabled:opacity-20"
+              >
+                Prev
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentPage(currentPage + 1);
+                }}
+                disabled={recentTasks.length < 20}
+                className="px-2 py-1 rounded border border-nexus-border hover:bg-white/5 transition-all disabled:opacity-20"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       )}
