@@ -133,6 +133,16 @@ class TokenRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Public endpoints
 # ---------------------------------------------------------------------------
+@app.get("/")
+async def root() -> dict[str, str]:
+    """Root endpoint — welcome message."""
+    return {
+        "message": "NEXUS-NODE Action Mesh is running",
+        "health_check": "/api/v1/health",
+        "docs": "/api/v1/docs"
+    }
+
+
 @app.get("/api/v1/health")
 async def health() -> dict[str, str]:
     """Health check — no auth required."""
