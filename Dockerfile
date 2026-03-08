@@ -1,36 +1,50 @@
-# Use astral-sh uv image directly
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+# Multi-stage Dockerfile for Next.js frontend
+FROM node:18-alpine AS base
 
-# Enable bytecode compilation and use copy mode for uv
-ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
-
+# Phase 1: Dependencies
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy dependency files only (from the backend folder)
-COPY backend/uv.lock backend/pyproject.toml /app/
+# Copy package files from frontend folder
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci
 
-# Install dependencies using standard COPY (no mounts to avoid host errors)
-RUN uv sync --frozen --no-install-project --no-dev
+# Phase 2: Build
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY frontend/ . 
 
-# Add the backend code
-COPY backend /app/
+# Set necessary environment variables for build
+ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV production
 
-# Final sync to install the project itself
-RUN uv sync --frozen --no-dev
+# Run build
+RUN npm run build
 
-# Final runtime stage
-FROM python:3.12-slim-bookworm
-
+# Phase 3: Runtime
+FROM base AS runner
 WORKDIR /app
 
-# Copy the virtual environment and app from the builder
-COPY --from=builder /app /app
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
 
-# Ensure the virtualenv is used by default
-ENV PATH="/app/.venv/bin:$PATH"
+# Security: Don't run as root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Expose FastAPI port
-EXPOSE 8000
+# Copy essential files
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
 
-# Run the application
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+USER nextjs
+
+EXPOSE 3000
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+# Use shell form to support $PORT expansion
+CMD npm start
