@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Install dependencies using uv.lock and pyproject.toml
 # Using mounts to cache the uv cache directory between builds
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --no-dev
@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ADD . /app
 
 # Final sync to install the project itself
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
 # Final runtime stage
