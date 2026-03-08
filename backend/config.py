@@ -68,10 +68,10 @@ class Settings(BaseSettings):
     )
 
     # ── App behaviour ─────────────────────────────────────────────────────────
-    log_level: str = Field(default="INFO", pattern="^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
-    max_iterations: int = Field(default=10, ge=1, le=50)
-    hitl_timeout_seconds: int = Field(default=600, ge=30, le=3600)
-    environment: str = Field(default="development", pattern="^(development|staging|production)$")
+    log_level: str = Field(default="INFO")
+    max_iterations: int = Field(default=10)
+    hitl_timeout_seconds: int = Field(default=600)
+    environment: str = Field(default="development")
 
     # ── Computed helpers ──────────────────────────────────────────────────────
     @field_validator("allowed_origins", mode="before")

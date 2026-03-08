@@ -21,14 +21,9 @@ from typing import Any, AsyncIterator
 
 import structlog
 import traceback
-from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from slowapi import Limiter
-from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
-from slowapi.util import get_remote_address
 from sse_starlette.sse import EventSourceResponse
 
 from config import get_settings
@@ -86,8 +81,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 # ---------------------------------------------------------------------------
 # Rate limiter & App
 # ---------------------------------------------------------------------------
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
-
 app = FastAPI(
     title="NEXUS-NODE Action Mesh",
     version="0.1.0",
@@ -97,16 +90,10 @@ app = FastAPI(
     redoc_url=None,
 )
 
-app.state.limiter = limiter
-app.add_exception_handler(  # type: ignore[arg-type]
-    RateLimitExceeded,
-    lambda req, exc: HTTPException(status_code=429, detail="Rate limit exceeded"),
-)
-app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Temporarily allow all for emergency unblocking
-    allow_credentials=True,
+    allow_origins=["*"], 
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -161,6 +148,11 @@ class TokenRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Public endpoints
 # ---------------------------------------------------------------------------
+@app.get("/")
+async def root():
+    """Root endpoint for basic connectivity check."""
+    return {"status": "ok", "message": "NEXUS-NODE Backend is running"}
+
 @app.get("/api/v1/health")
 async def health() -> dict[str, Any]:
     """Health check — includes detailed debug info about env vars."""
