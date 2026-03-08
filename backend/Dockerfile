@@ -6,13 +6,14 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
 WORKDIR /app
 
-# Install dependencies using uv.lock and pyproject.toml
-RUN --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-dev
+# Copy dependency files
+COPY uv.lock pyproject.toml /app/
+
+# Install dependencies using standard COPY (no mounts to avoid host errors)
+RUN uv sync --frozen --no-install-project --no-dev
 
 # Add the rest of the application code
-ADD . /app
+COPY . /app
 
 # Final sync to install the project itself
 RUN uv sync --frozen --no-dev
