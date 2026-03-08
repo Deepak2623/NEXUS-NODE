@@ -30,7 +30,7 @@ async def _get_access_token() -> str:
     token_url = f"{_base_url()}/services/oauth2/token"
     data = {
         "grant_type": "client_credentials",
-        "client_id": settings.salesforce_mcp_client_id.get_secret_value(),
+        "client_id": settings.salesforce_mcp_client_id,
         "client_secret": settings.salesforce_mcp_client_secret.get_secret_value(),
     }
     verify_mode = not os.getenv("BYPASS_SSL_VERIFY", "0") == "1"

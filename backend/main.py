@@ -99,19 +99,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log every incoming request for emergency debugging."""
+    start_time = datetime.now(UTC)
+    try:
+        response = await call_next(request)
+        duration = (datetime.now(UTC) - start_time).total_seconds()
+        logger.info("request_finished", path=request.url.path, method=request.method, status=response.status_code, duration=duration)
+        return response
+    except Exception as e:
+        logger.error("request_failed", path=request.url.path, error=str(e), traceback=traceback.format_exc())
+        raise
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Catch-all for unhandled exceptions — logs traceback and returns 500."""
     error_id = str(uuid.uuid4())
-    logger.error("unhandled_exception", error_id=error_id, error=str(exc), traceback=traceback.format_exc())
+    error_msg = f"{type(exc).__name__}: {str(exc)}"
+    logger.error("unhandled_exception", error_id=error_id, error=error_msg, traceback=traceback.format_exc())
     
-    # In production, we still return a 500 but with a tracking ID
     return JSONResponse(
         status_code=500,
         content={
-            "detail": "Internal Server Error",
+            "detail": f"NEXUS_BACKEND_CRASH: {error_msg}",
             "error_id": error_id,
-            "message": str(exc)  # Show for emergency debugging
+            "path": request.url.path
         }
     )
 
