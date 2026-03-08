@@ -101,13 +101,12 @@ def governed(node_name: str) -> Callable[[F], F]:
                     node=node_name,
                     actions=[tc.get("name") for tc in pending_tools if tc.get("name") in HITL_ACTIONS],
                 )
-                import asyncio
-                # Import safely at runtime to avoid circular dependencies
                 import main
                 queue = main._task_events.get(task_id)
                 if queue:
                     # Emit a synthetic event so the UI flips to HITL required
-                    asyncio.create_task(queue.put({
+                    # We await these to ensure the UI updates BEFORE we enter the long sleep loop
+                    await queue.put({
                         "type": "state_update",
                         "data": {
                             "hitl_required": True,
@@ -115,10 +114,10 @@ def governed(node_name: str) -> Callable[[F], F]:
                             "node_status": state.get("node_status", {}),
                             "message": "⚠️ Waiting for Human Approval on sensitive action..."
                         }
-                    }))
-                    asyncio.create_task(main.update_task_status(task_id, "hitl_wait"))
-
-                from stores.task_store import get_task
+                    })
+                
+                from stores.task_store import get_task, update_task_status
+                await update_task_status(task_id, "hitl_wait")
                 
                 logger.warning("hitl_polling_started", task_id=task_id)
                 # Max 600s wait (300 * 2s)

@@ -32,18 +32,18 @@ export default function DashboardPage() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const [tasksRes, auditRes] = await Promise.all([
+      const [tasksRes, auditRes, healthRes] = await Promise.all([
         getTasks(currentPage, 20).catch(() => ({ tasks: [], count: 0 })),
         getAuditLog(1, 10).catch(() => ({ entries: [] })),
+        fetch("/api/backend/health")
+          .then((r) => r.json())
+          .catch(() => ({ pending_hitl_count: 0 })),
       ]);
-
-      const hitlCount =
-        (auditRes as any).entries?.filter((e: any) => e.hitl_event).length || 0;
 
       setStats({
         tasksToday: String((tasksRes as any).count || 0),
         auditEntries: String((auditRes as any).entries?.length || 0),
-        hitlEvents: String(hitlCount),
+        hitlEvents: String(healthRes.pending_hitl_count || 0),
       });
 
       setRecentTasks((tasksRes as any).tasks || []);

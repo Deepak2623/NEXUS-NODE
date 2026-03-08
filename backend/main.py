@@ -184,6 +184,7 @@ async def health() -> dict[str, Any]:
         "version": "0.1.0",
         "environment": s.environment,
         "timestamp": datetime.now(UTC).isoformat(),
+        "pending_hitl_count": await count_pending_hitl(),
         "config_check": {
             "supabase_url": _is_set(s.supabase_url),
             "supabase_key": _is_set(s.supabase_service_key),

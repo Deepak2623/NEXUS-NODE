@@ -123,3 +123,14 @@ async def clear_tasks() -> None:
     # Or just use an empty filter if the policy allows.
     client.table(_TABLE).delete().neq("status", "non_existent").execute()
     logger.warning("all_tasks_cleared")
+
+
+async def count_pending_hitl() -> int:
+    """Count tasks currently waiting for human approval.
+
+    Returns:
+        Integer count of 'hitl_wait' tasks.
+    """
+    client = get_supabase_client()
+    result = client.table(_TABLE).select("id", count="exact").eq("status", "hitl_wait").execute()
+    return result.count or 0
