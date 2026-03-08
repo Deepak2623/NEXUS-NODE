@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,6 +21,22 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    @model_validator(mode="after")
+    def validate_mcp_tokens(self) -> Settings:
+        """Log warnings for missing MCP tokens in non-development environments."""
+        if self.environment != "development":
+            missing = []
+            if not self.github_mcp_token.get_secret_value() or self.github_mcp_token.get_secret_value().startswith("ghp_..."):
+                missing.append("GITHUB_MCP_TOKEN")
+            if not self.slack_mcp_bot_token.get_secret_value() or self.slack_mcp_bot_token.get_secret_value().startswith("xoxb-..."):
+                missing.append("SLACK_MCP_BOT_TOKEN")
+            
+            if missing:
+                import structlog
+                logger = structlog.get_logger(__name__)
+                logger.warning("missing_production_secrets", keys=missing)
+        return self
 
     # ── LLM ──────────────────────────────────────────────────────────────────
     groq_api_key: SecretStr = Field(..., description="Groq API key for Llama-3.3-70b")

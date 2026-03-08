@@ -44,16 +44,22 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BACKEND}${path}`, {
-    headers,
-    cache: "no-store",
-    ...init,
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`${res.status} ${res.statusText}: ${body}`);
+  try {
+    const res = await fetch(`${BACKEND}${path}`, {
+      headers,
+      cache: "no-store",
+      ...init,
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`API Error ${res.status}: ${path}`, body);
+      throw new Error(`${res.status} ${res.statusText}: ${body}`);
+    }
+    return res.json() as Promise<T>;
+  } catch (error) {
+    console.error(`Fetch failed: ${path}`, error);
+    throw error;
   }
-  return res.json() as Promise<T>;
 }
 
 export interface RunTaskPayload {
