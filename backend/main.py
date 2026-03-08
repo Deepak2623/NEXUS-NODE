@@ -393,20 +393,22 @@ async def get_task_status(
 @app.get("/api/v1/tasks")
 async def list_all_tasks(
     current_user: CurrentUser,  # ← JWT required
+    page: int = 1,
+    page_size: int = 50,
     status: str | None = None,
-    limit: int = 50,
 ) -> dict[str, Any]:
-    """List recent tasks from DB.
+    """List recent tasks from DB with pagination.
 
     Args:
+        page: Page number (1-indexed).
+        page_size: Number of entries per page.
         status: Optional status filter.
-        limit: Max results.
         current_user: Validated JWT payload.
 
     Returns:
         Dict with tasks list.
     """
-    tasks = await list_tasks(limit=limit, status_filter=status)
+    tasks = await list_tasks(page=page, page_size=page_size, status_filter=status)
     return {"tasks": tasks, "count": len(tasks)}
 
 
