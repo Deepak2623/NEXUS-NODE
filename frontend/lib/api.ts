@@ -123,9 +123,10 @@ export async function rejectHITL(taskId: string, actor = "user", reason = "") {
   });
 }
 
-export async function getTasks(limit = 50, status?: string) {
+export async function getTasks(page = 1, pageSize = 50, status?: string) {
   const params = new URLSearchParams({
-    limit: String(limit),
+    page: String(page),
+    page_size: String(pageSize),
   });
   if (status) params.set("status", status);
   return apiFetch<{ tasks: any[]; count: number }>(

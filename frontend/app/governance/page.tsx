@@ -45,6 +45,7 @@ interface Toast {
 export default function GovernancePage() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [taskPage, setTaskPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -64,7 +65,7 @@ export default function GovernancePage() {
       try {
         const [auditRes, tasksRes] = await Promise.all([
           getAuditLog(page, 50).catch(() => ({ entries: [] })),
-          getTasks(50).catch(() => ({ tasks: [], count: 0 })),
+          getTasks(taskPage, 50).catch(() => ({ tasks: [], count: 0 })),
         ]);
 
         setEntries((auditRes as any).entries ?? []);
@@ -324,6 +325,27 @@ export default function GovernancePage() {
               </div>
             ))
           )}
+        </div>
+
+        {/* Task History Pagination */}
+        <div className="flex items-center justify-between px-1 text-[10px] font-mono uppercase tracking-widest text-nexus-muted">
+          <span>Task Page {taskPage}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setTaskPage(Math.max(1, taskPage - 1))}
+              disabled={taskPage === 1}
+              className="px-3 py-1 rounded-lg border border-nexus-border hover:bg-white/5 transition-all disabled:opacity-20"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => setTaskPage(taskPage + 1)}
+              disabled={tasks.length < 50}
+              className="px-3 py-1 rounded-lg border border-nexus-border hover:bg-white/5 transition-all disabled:opacity-20"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 

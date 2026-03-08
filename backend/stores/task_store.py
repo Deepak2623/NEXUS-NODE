@@ -85,18 +85,20 @@ async def update_task_status(
     logger.info("task_updated", task_id=task_id, status=status)
 
 
-async def list_tasks(limit: int = 50, status_filter: str | None = None) -> list[dict[str, Any]]:
-    """Return recent tasks, optionally filtered by status.
+async def list_tasks(page: int = 1, page_size: int = 50, status_filter: str | None = None) -> list[dict[str, Any]]:
+    """Return recent tasks with pagination, optionally filtered by status.
 
     Args:
-        limit: Maximum number of tasks to return.
+        page: Page number (1-indexed).
+        page_size: Number of entries per page.
         status_filter: If set, filter to tasks with this status.
 
     Returns:
         List of task record dicts, ordered by created_at descending.
     """
     client = get_supabase_client()
-    query = client.table(_TABLE).select("*").order("created_at", desc=True).limit(limit)
+    offset = (page - 1) * page_size
+    query = client.table(_TABLE).select("*").order("created_at", desc=True).range(offset, offset + page_size - 1)
     if status_filter:
         query = query.eq("status", status_filter)
     result = query.execute()
