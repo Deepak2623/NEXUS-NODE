@@ -21,13 +21,14 @@ async def check_mcp_integrations_health() -> dict[str, Any]:
         return_exceptions=True,
     )
 
-    def _safe(result: Any) -> dict[str, Any]:
+    def _safe(result: Any, service_name: str) -> dict[str, Any]:
         if isinstance(result, Exception):
+            logger.error("mcp_integration_error", service=service_name, error=str(result))
             return {"status": "error", "error": str(result)}
         return result  # type: ignore[return-value]
 
     return {
-        "github": _safe(github),
-        "slack": _safe(slack),
-        "salesforce": _safe(salesforce),
+        "github": _safe(github, "github"),
+        "slack": _safe(slack, "slack"),
+        "salesforce": _safe(salesforce, "salesforce"),
     }
