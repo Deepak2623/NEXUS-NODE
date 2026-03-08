@@ -48,6 +48,7 @@ export default function GovernancePage() {
   const [taskPage, setTaskPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [pendingCount, setPendingCount] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = (message: string, type: "success" | "error" = "success") => {
@@ -63,20 +64,24 @@ export default function GovernancePage() {
     async (showLoading = true) => {
       if (showLoading) setLoading(true);
       try {
-        const [auditRes, tasksRes] = await Promise.all([
+        const [auditRes, tasksRes, healthRes] = await Promise.all([
           getAuditLog(page, 50).catch(() => ({ entries: [] })),
           getTasks(taskPage, 50).catch(() => ({ tasks: [], count: 0 })),
+          fetch("/api/backend/health")
+            .then((r) => r.json())
+            .catch(() => ({ pending_hitl_count: 0 })),
         ]);
 
         setEntries((auditRes as any).entries ?? []);
         setTasks((tasksRes as any).tasks ?? []);
+        setPendingCount(healthRes.pending_hitl_count || 0);
       } catch (err) {
         console.error("Governance fetch failed", err);
       } finally {
         if (showLoading) setLoading(false);
       }
     },
-    [page],
+    [page, taskPage],
   );
 
   useEffect(() => {
@@ -207,7 +212,7 @@ export default function GovernancePage() {
           },
           {
             label: "HITL Interventions",
-            value: String(entries.filter((e) => e.hitl_event).length),
+            value: String(pendingCount),
             icon: Shield,
             color: "text-nexus-emerald",
           },
