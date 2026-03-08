@@ -50,9 +50,9 @@ def create_access_token(sub: str, role: str = "user") -> str:
         "exp": now + settings.jwt_expire_minutes * 60,
     }
     key_str = settings.jwt_private_key.get_secret_value()
-    if not key_str or "BEGIN RSA PRIVATE KEY" not in key_str:
+    if not key_str or "BEGIN" not in key_str or "PRIVATE KEY" not in key_str:
         logger.error("missing_jwt_private_key")
-        raise RuntimeError("JWT_PRIVATE_KEY is not properly configured")
+        raise RuntimeError("JWT_PRIVATE_KEY is not properly configured (expected PEM format)")
     
     return jwt.encode(
         payload,
