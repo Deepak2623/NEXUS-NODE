@@ -33,6 +33,7 @@ from graph.state import AgentState
 from middleware.auth import CurrentUser, create_access_token
 from routers import audit_router, hitl_router, mcp_router
 from stores.task_store import create_task, get_task, list_tasks, update_task_status
+from stores.event_hub import task_events
 
 # ---------------------------------------------------------------------------
 # Logging & Settings
@@ -56,10 +57,8 @@ structlog.configure(
 )
 logger: structlog.BoundLogger = structlog.get_logger(__name__)
 
-# ---------------------------------------------------------------------------
 # In-memory SSE queues (ephemeral — only for active connections)
-# ---------------------------------------------------------------------------
-_task_events: dict[str, asyncio.Queue[dict[str, Any]]] = {}
+# Migrated to stores.event_hub.task_events for mesh accessibility
 
 
 # ---------------------------------------------------------------------------
@@ -273,7 +272,7 @@ async def run_task(
     }
 
     queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
-    _task_events[task_id] = queue
+    task_events[task_id] = queue
 
     asyncio.create_task(_run_graph(task_id, initial_state, queue))
     logger.info("task_queued", task_id=task_id, actor=actor)
@@ -333,7 +332,7 @@ async def _run_graph(
         await queue.put({"type": "done"})
         # Clean up queue after 5 minutes (SSE client should be done by then)
         await asyncio.sleep(300)
-        _task_events.pop(task_id, None)
+        task_events.pop(task_id, None)
 
 
 @app.get("/api/v1/stream/{task_id}")
@@ -346,7 +345,7 @@ async def stream_task(task_id: str) -> EventSourceResponse:
     Returns:
         Server-Sent Events response.
     """
-    if task_id not in _task_events:
+    if task_id not in task_events:
         # Check DB — task might have already completed
         db_task = await get_task(task_id)
         if not db_task:

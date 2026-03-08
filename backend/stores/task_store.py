@@ -126,8 +126,13 @@ async def delete_task(task_id: str) -> None:
 async def clear_audit_log() -> None:
     """Delete ALL audit log records from the database."""
     client = get_supabase_client()
-    # Use a filter that matches all rows (created_at not null is safe)
-    await asyncio.to_thread(client.table("audit_log").delete().not_.is_("created_at", "null").execute)
+    # Use a filter that matches all rows (neq a dummy UUID is safe)
+    await asyncio.to_thread(
+        client.table("audit_log")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000")
+        .execute
+    )
     logger.warning("audit_log_purged")
 
 
@@ -138,7 +143,12 @@ async def clear_tasks() -> None:
     
     client = get_supabase_client()
     # Wipe tasks
-    await asyncio.to_thread(client.table(_TABLE).delete().not_.is_("created_at", "null").execute)
+    await asyncio.to_thread(
+        client.table(_TABLE)
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000")
+        .execute
+    )
     logger.warning("all_governance_data_purged")
 
 

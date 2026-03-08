@@ -18,6 +18,7 @@ import structlog
 from governance.auditor import log_audit_event
 from governance.pii_scrubber import scrub_dict
 from graph.state import AgentState
+from stores.event_hub import task_events
 
 logger: structlog.BoundLogger = structlog.get_logger(__name__)
 
@@ -101,8 +102,7 @@ def governed(node_name: str) -> Callable[[F], F]:
                     node=node_name,
                     actions=[tc.get("name") for tc in pending_tools if tc.get("name") in HITL_ACTIONS],
                 )
-                import main
-                queue = main._task_events.get(task_id)
+                queue = task_events.get(task_id)
                 if queue:
                     # Emit a synthetic event so the UI flips to HITL required
                     # We await these to ensure the UI updates BEFORE we enter the long sleep loop
