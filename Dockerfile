@@ -22,30 +22,35 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN npm run build
 
 # Phase 3: Production image, copy all the files and run next
-FROM node:20.12-alpine AS runner
-# Install Python, pip, and build essentials
-RUN apk add --no-cache python3 py3-pip curl gcc musl-dev python3-dev
+FROM node:20.12-bookworm-slim AS runner
+# Install uv and system dependencies
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Create a virtualenv and install backend deps
-COPY backend ./backend
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir ./backend
-
 # Automatically leverage output traces to reduce image size
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Copy remaining backend files and start script
+# Copy backend files
 COPY backend ./backend
 COPY start.sh ./start.sh
 RUN chmod +x ./start.sh
+
+# Install Python 3.12 and sync dependencies using uv
+WORKDIR /app/backend
+RUN uv python install 3.12
+RUN uv sync --frozen --no-dev
+
+WORKDIR /app
 
 EXPOSE 3000
 EXPOSE 8000
