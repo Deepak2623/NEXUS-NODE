@@ -355,7 +355,7 @@ async def stream_task(task_id: str) -> EventSourceResponse:
             yield json.dumps({"type": "status", "data": {"phase": "completed", "task_id": task_id}})
         return EventSourceResponse(_replay())
 
-    queue = _task_events[task_id]
+    queue = task_events[task_id]
 
     async def generator() -> AsyncIterator[str]:
         while True:
