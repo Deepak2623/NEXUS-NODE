@@ -52,8 +52,20 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     });
     if (!res.ok) {
       const body = await res.text();
-      console.error(`API Error ${res.status}: ${path}`, body);
-      throw new Error(`${res.status} ${res.statusText}: ${body}`);
+      let parsedBody;
+      try {
+        parsedBody = JSON.parse(body);
+      } catch (e) {
+        parsedBody = body;
+      }
+      console.error(`API Error ${res.status}: ${path}`, parsedBody);
+      throw new Error(
+        `[Backend Error ${res.status}] ${path}: ${
+          typeof parsedBody === "string"
+            ? parsedBody
+            : JSON.stringify(parsedBody)
+        }`,
+      );
     }
     return res.json() as Promise<T>;
   } catch (error) {

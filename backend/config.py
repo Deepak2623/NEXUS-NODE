@@ -39,24 +39,25 @@ class Settings(BaseSettings):
         return self
 
     # ── LLM ──────────────────────────────────────────────────────────────────
-    groq_api_key: SecretStr = Field(..., description="Groq API key for Llama-3.3-70b")
-    google_api_key: SecretStr = Field(..., description="Google AI API key for Gemini 2.5 Flash")
+    # ── LLM (Made optional for emergency startup) ──────────────────────────
+    groq_api_key: SecretStr = Field(default=SecretStr("gsk_placeholder"), description="Groq API key")
+    google_api_key: SecretStr = Field(default=SecretStr("AIza_placeholder"), description="Google AI API key")
 
-    # ── MCP tokens (Made optional with placeholder defaults to prevent startup crash) ──────
-    github_mcp_token: SecretStr = Field(default=SecretStr("ghp_placeholder"), description="GitHub personal access token")
+    # ── MCP tokens (Made optional with placeholder defaults) ────────────────
+    github_mcp_token: SecretStr = Field(default=SecretStr("ghp_placeholder"), description="GitHub PAT")
     slack_mcp_bot_token: SecretStr = Field(default=SecretStr("xoxb-placeholder"), description="Slack bot token")
-    salesforce_mcp_client_id: str = Field(default="sf_placeholder", description="Salesforce client_id")
-    salesforce_mcp_client_secret: SecretStr = Field(default=SecretStr("sf_secret_placeholder"), description="Salesforce client_secret")
-    salesforce_mcp_instance_url: str = Field(default="https://login.salesforce.com", description="Salesforce instance URL")
+    salesforce_mcp_client_id: str = Field(default="sf_placeholder")
+    salesforce_mcp_client_secret: SecretStr = Field(default=SecretStr("sf_secret_placeholder"))
+    salesforce_mcp_instance_url: str = Field(default="https://login.salesforce.com")
 
-    # ── Supabase ──────────────────────────────────────────────────────────────
-    supabase_url: str = Field(..., description="Supabase project URL")
-    supabase_service_key: SecretStr = Field(..., description="Supabase service_role key (never expose to browser)")
-    supabase_anon_key: SecretStr = Field(..., description="Supabase anon key (safe for frontend)")
+    # ── Supabase (Made optional for startup) ──────────────────────────────────
+    supabase_url: str = Field(default="https://placeholder.supabase.co")
+    supabase_service_key: SecretStr = Field(default=SecretStr("sb_placeholder"))
+    supabase_anon_key: SecretStr = Field(default=SecretStr("sb_placeholder"))
 
-    # ── Auth / JWT ────────────────────────────────────────────────────────────
-    jwt_private_key: SecretStr = Field(..., description="RS256 PEM private key for signing JWTs")
-    jwt_public_key: str = Field(..., description="RS256 PEM public key for verifying JWTs")
+    # ── Auth / JWT (Made optional for startup) ────────────────────────────────
+    jwt_private_key: SecretStr = Field(default=SecretStr("pem_placeholder"))
+    jwt_public_key: str = Field(default="pem_placeholder")
     jwt_algorithm: str = Field(default="RS256")
     jwt_expire_minutes: int = Field(default=60, ge=5, le=1440)
 

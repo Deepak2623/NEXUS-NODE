@@ -22,33 +22,36 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN npm run build
 
 # Phase 3: Production image, copy all the files and run next
-FROM base AS runner
+FROM node:20.12-alpine AS runner
+# Install Python, pip, and build essentials
+RUN apk add --no-cache python3 py3-pip curl gcc musl-dev python3-dev
+
 WORKDIR /app
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+# Create a virtualenv and install backend deps
+COPY backend ./backend
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --no-cache-dir ./backend
 
 # Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
-USER nextjs
+# Copy remaining backend files and start script
+COPY backend ./backend
+COPY start.sh ./start.sh
+RUN chmod +x ./start.sh
 
 EXPOSE 3000
+EXPOSE 8000
 
 ENV PORT 3000
-# set hostname to localhost
 ENV HOSTNAME "0.0.0.0"
 
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/next-config-js/output
-CMD ["node", "server.js"]
+# Use the unified start script
+CMD ["./start.sh"]

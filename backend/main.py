@@ -158,17 +158,30 @@ class TokenRequest(BaseModel):
 # ---------------------------------------------------------------------------
 @app.get("/api/v1/health")
 async def health() -> dict[str, Any]:
-    """Health check — includes debug info about env vars."""
+    """Health check — includes detailed debug info about env vars."""
+    s = _get_cached_settings()
+    
+    def _is_set(val: Any) -> bool:
+        if isinstance(val, SecretStr):
+            v = val.get_secret_value()
+        else:
+            v = str(val)
+        return bool(v and "placeholder" not in v)
+
     return {
         "status": "ok",
         "version": "0.1.0",
-        "environment": settings.environment,
+        "environment": s.environment,
         "timestamp": datetime.now(UTC).isoformat(),
         "config_check": {
-            "supabase": bool(settings.supabase_url and settings.supabase_service_key),
-            "groq": bool(settings.groq_api_key),
-            "google": bool(settings.google_api_key),
-            "jwt": bool(settings.jwt_private_key and settings.jwt_public_key),
+            "supabase_url": _is_set(s.supabase_url),
+            "supabase_key": _is_set(s.supabase_service_key),
+            "groq_key": _is_set(s.groq_api_key),
+            "google_key": _is_set(s.google_api_key),
+            "jwt_private": _is_set(s.jwt_private_key),
+            "jwt_public": _is_set(s.jwt_public_key),
+            "github_token": _is_set(s.github_mcp_token),
+            "slack_token": _is_set(s.slack_mcp_bot_token),
         }
     }
 
