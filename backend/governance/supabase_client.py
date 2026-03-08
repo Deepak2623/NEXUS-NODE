@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import os
 
+import structlog
 from supabase import Client, create_client
+
+logger: structlog.BoundLogger = structlog.get_logger(__name__)
 
 _client: Client | None = None
 

@@ -178,17 +178,23 @@ async def health() -> dict[str, Any]:
             v = str(val)
         return bool(v and "placeholder" not in v)
 
+    hitl_count = 0
+    try:
+        hitl_count = await count_pending_hitl()
+    except Exception as e:
+        logger.warning("health_hitl_check_failed", error=str(e))
+
     return {
         "status": "ok",
         "version": "0.1.0",
         "environment": s.environment,
         "timestamp": datetime.now(UTC).isoformat(),
-        "pending_hitl_count": await count_pending_hitl(),
+        "pending_hitl_count": hitl_count,
         "config_check": {
             "supabase_url": _is_set(s.supabase_url),
             "supabase_key": _is_set(s.supabase_service_key),
-            "groq_key": _is_set(s.groq_api_key),
-            "google_key": _is_set(s.google_api_key),
+            "groq_key": _is_set(s.groq_api_key_str),
+            "google_key": _is_set(s.google_api_key_str),
             "jwt_private": _is_set(s.jwt_private_key),
             "jwt_public": _is_set(s.jwt_public_key),
             "github_token": _is_set(s.github_mcp_token),
