@@ -16,6 +16,7 @@ import json
 import uuid
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from functools import lru_cache
 from typing import Any, AsyncIterator
 
 import structlog
@@ -43,8 +44,12 @@ from stores.task_store import create_task, get_task, list_tasks, update_task_sta
 # We fetch settings inside functions to allow the app to start even if some env vars are missing
 @lru_cache()
 def _get_cached_settings():
-    from config import get_settings as actual_get_settings
-    return actual_get_settings()
+    try:
+        from config import get_settings as actual_get_settings
+        return actual_get_settings()
+    except Exception as e:
+        logger.error("settings_load_error", error=str(e), traceback=traceback.format_exc())
+        raise
 
 structlog.configure(
     processors=[
