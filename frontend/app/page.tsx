@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const fetchStats = useCallback(async () => {
     try {
       const [tasksRes, auditRes] = await Promise.all([
-        getTasks(1).catch(() => ({ count: 0 })),
+        getTasks(currentPage, 20).catch(() => ({ tasks: [], count: 0 })),
         getAuditLog(1, 10).catch(() => ({ entries: [] })),
       ]);
 
@@ -50,7 +50,7 @@ export default function DashboardPage() {
     } catch (err) {
       console.error("Failed to load stats", err);
     }
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     fetchStats();
