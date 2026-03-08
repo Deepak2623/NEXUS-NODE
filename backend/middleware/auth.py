@@ -49,9 +49,14 @@ def create_access_token(sub: str, role: str = "user") -> str:
         "iat": now,
         "exp": now + settings.jwt_expire_minutes * 60,
     }
+    key_str = settings.jwt_private_key.get_secret_value()
+    if not key_str or "BEGIN RSA PRIVATE KEY" not in key_str:
+        logger.error("missing_jwt_private_key")
+        raise RuntimeError("JWT_PRIVATE_KEY is not properly configured")
+    
     return jwt.encode(
         payload,
-        settings.jwt_private_key.get_secret_value().replace("\\n", "\n"),
+        key_str.replace("\\n", "\n"),
         algorithm=settings.jwt_algorithm,
     )
 
