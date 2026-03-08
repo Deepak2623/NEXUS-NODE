@@ -2,9 +2,12 @@
   "name": "nexus-node-frontend",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next# Production-grade multi-stage Dockerfile for Next.js Standalone\nFROM node:20.12-alpine AS base\nxt lint",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
