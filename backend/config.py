@@ -42,12 +42,12 @@ class Settings(BaseSettings):
     groq_api_key: SecretStr = Field(..., description="Groq API key for Llama-3.3-70b")
     google_api_key: SecretStr = Field(..., description="Google AI API key for Gemini 2.5 Flash")
 
-    # ── MCP tokens ───────────────────────────────────────────────────────────
-    github_mcp_token: SecretStr = Field(..., description="GitHub personal access token (read-only)")
-    slack_mcp_bot_token: SecretStr = Field(..., description="Slack bot token (chat:write, channels:read)")
-    salesforce_mcp_client_id: SecretStr = Field(..., description="Salesforce connected app client_id")
-    salesforce_mcp_client_secret: SecretStr = Field(..., description="Salesforce connected app client_secret")
-    salesforce_mcp_instance_url: str = Field(..., description="e.g. https://yourorg.my.salesforce.com")
+    # ── MCP tokens (Made optional with placeholder defaults to prevent startup crash) ──────
+    github_mcp_token: SecretStr = Field(default=SecretStr("ghp_placeholder"), description="GitHub personal access token")
+    slack_mcp_bot_token: SecretStr = Field(default=SecretStr("xoxb-placeholder"), description="Slack bot token")
+    salesforce_mcp_client_id: str = Field(default="sf_placeholder", description="Salesforce client_id")
+    salesforce_mcp_client_secret: SecretStr = Field(default=SecretStr("sf_secret_placeholder"), description="Salesforce client_secret")
+    salesforce_mcp_instance_url: str = Field(default="https://login.salesforce.com", description="Salesforce instance URL")
 
     # ── Supabase ──────────────────────────────────────────────────────────────
     supabase_url: str = Field(..., description="Supabase project URL")

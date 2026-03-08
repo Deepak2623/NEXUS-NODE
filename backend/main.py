@@ -19,7 +19,9 @@ from datetime import UTC, datetime
 from typing import Any, AsyncIterator
 
 import structlog
-from fastapi import Depends, FastAPI, HTTPException, Request
+import traceback
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from slowapi import Limiter
@@ -99,6 +101,22 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Catch-all for unhandled exceptions — logs traceback and returns 500."""
+    error_id = str(uuid.uuid4())
+    logger.error("unhandled_exception", error_id=error_id, error=str(exc), traceback=traceback.format_exc())
+    
+    # In production, we still return a 500 but with a tracking ID
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal Server Error",
+            "error_id": error_id,
+            "message": str(exc)  # Show for emergency debugging
+        }
+    )
+
 # Routers (auth is applied per-route, not globally, so /health stays public)
 app.include_router(audit_router.router, prefix="/api/v1")
 app.include_router(hitl_router.router, prefix="/api/v1")
@@ -134,12 +152,19 @@ class TokenRequest(BaseModel):
 # Public endpoints
 # ---------------------------------------------------------------------------
 @app.get("/api/v1/health")
-async def health() -> dict[str, str]:
-    """Health check — no auth required."""
+async def health() -> dict[str, Any]:
+    """Health check — includes debug info about env vars."""
     return {
         "status": "ok",
         "version": "0.1.0",
+        "environment": settings.environment,
         "timestamp": datetime.now(UTC).isoformat(),
+        "config_check": {
+            "supabase": bool(settings.supabase_url and settings.supabase_service_key),
+            "groq": bool(settings.groq_api_key),
+            "google": bool(settings.google_api_key),
+            "jwt": bool(settings.jwt_private_key and settings.jwt_public_key),
+        }
     }
 
 
