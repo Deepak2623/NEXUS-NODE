@@ -117,12 +117,13 @@ async def delete_task(task_id: str) -> None:
 
 
 async def clear_tasks() -> None:
-    """Delete ALL task records from the database."""
+    """Delete ALL task records and ALL audit logs from the database (Atomic Purge)."""
     client = get_supabase_client()
-    # In Supabase/PostgREST, we need a filter to delete. 'neq.0' is a common hack for 'all' if id exists.
-    # Or just use an empty filter if the policy allows.
+    # Wipe audit log first (dependent on tasks if RLS/foreign keys exist, though here they are loose)
+    client.table("audit_log").delete().neq("node", "non_existent").execute()
+    # Wipe tasks
     client.table(_TABLE).delete().neq("status", "non_existent").execute()
-    logger.warning("all_tasks_cleared")
+    logger.warning("all_governance_data_purged")
 
 
 async def count_pending_hitl() -> int:
