@@ -1,0 +1,27 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "services": {
+    "frontend": {
+      "name": "nexus-node-frontend",
+      "root": "/",
+      "source": ".",
+      "config": {
+        "watchPatterns": ["frontend/**", "Dockerfile", "next.config.mjs"]
+      },
+      "build": {
+        "dockerfilePath": "Dockerfile"
+      }
+    },
+    "backend": {
+      "name": "nexus-node-backend",
+      "root": "backend",
+      "source": "backend",
+      "config": {
+        "watchPatterns": ["backend/**"]
+      },
+      "build": {
+        "dockerfilePath": "Dockerfile"
+      }
+    }
+  }
+}
