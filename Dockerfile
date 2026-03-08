@@ -1,4 +1,4 @@
-# Use a high-performance Python image with uv pre-installed
+# Use astral-sh uv image directly
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 
 # Enable bytecode compilation and use copy mode for uv
@@ -6,14 +6,14 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
 WORKDIR /app
 
-# Copy dependency files
-COPY uv.lock pyproject.toml /app/
+# Copy dependency files only (from the backend folder)
+COPY backend/uv.lock backend/pyproject.toml /app/
 
 # Install dependencies using standard COPY (no mounts to avoid host errors)
 RUN uv sync --frozen --no-install-project --no-dev
 
-# Add the rest of the application code
-COPY . /app
+# Add the backend code
+COPY backend /app/
 
 # Final sync to install the project itself
 RUN uv sync --frozen --no-dev
