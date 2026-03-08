@@ -102,8 +102,6 @@ def governed(node_name: str) -> Callable[[F], F]:
                     actions=[tc.get("name") for tc in pending_tools if tc.get("name") in HITL_ACTIONS],
                 )
                 import asyncio
-                from routers.hitl_router import _pending_hitl
-                
                 # Import safely at runtime to avoid circular dependencies
                 import main
                 queue = main._task_events.get(task_id)
@@ -119,14 +117,20 @@ def governed(node_name: str) -> Callable[[F], F]:
                         }
                     }))
                     asyncio.create_task(main.update_task_status(task_id, "hitl_wait"))
-                    
+
+                from stores.task_store import get_task
+                
                 logger.warning("hitl_polling_started", task_id=task_id)
-                # Max 600s wait
+                # Max 600s wait (300 * 2s)
                 for _ in range(300):
-                    if task_id in _pending_hitl:
-                        decision = _pending_hitl.pop(task_id)
-                        state["hitl_approved"] = decision.get("approved", False)
-                        break
+                    task_rec = await get_task(task_id)
+                    if task_rec:
+                        if task_rec.get("status") == "hitl_approved":
+                            state["hitl_approved"] = True
+                            break
+                        if task_rec.get("status") == "hitl_rejected":
+                            state["hitl_approved"] = False
+                            break
                     await asyncio.sleep(2)
                 
                 if not state.get("hitl_approved"):

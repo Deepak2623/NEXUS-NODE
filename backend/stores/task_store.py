@@ -67,7 +67,7 @@ async def update_task_status(
 
     Args:
         task_id: UUID string for the task.
-        status: New status string (pending | running | completed | error | hitl_wait).
+        status: New status string (pending | running | completed | error | hitl_wait | hitl_approved | hitl_rejected).
         result: Optional final result payload.
         error: Optional error message.
         iteration: Current iteration count.

@@ -46,7 +46,7 @@ export default function GovernancePage() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page] = useState(1);
+  const [page, setPage] = useState(1);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = (message: string, type: "success" | "error" = "success") => {
@@ -441,6 +441,28 @@ export default function GovernancePage() {
                 )}
               </tbody>
             </table>
+          </div>
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between px-5 py-4 bg-white/[0.02] border-t border-nexus-border">
+            <p className="text-[10px] text-nexus-muted font-mono uppercase tracking-widest">
+              Showing Page {page}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="px-4 py-2 rounded-xl text-[10px] font-bold border border-nexus-border text-nexus-text hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={entries.length < 50}
+                className="px-4 py-2 rounded-xl text-[10px] font-bold border border-nexus-border text-nexus-text hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       </div>

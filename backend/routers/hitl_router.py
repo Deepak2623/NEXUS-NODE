@@ -15,8 +15,10 @@ from governance.auditor import log_audit_event
 logger: structlog.BoundLogger = structlog.get_logger(__name__)
 router = APIRouter(tags=["hitl"])
 
-# Shared with main.py via import at runtime to avoid circular imports
-_pending_hitl: dict[str, dict[str, Any]] = {}
+# ---------------------------------------------------------------------------
+# HITL Decisions are now stored in the Supabase 'tasks' table 'status' column.
+# 'hitl_wait' -> user triggers -> 'hitl_approved' or 'hitl_rejected'
+# ---------------------------------------------------------------------------
 
 
 class HITLDecision(BaseModel):
@@ -47,7 +49,8 @@ async def approve_hitl(task_id: str, body: HITLDecision) -> dict[str, str]:
         actor=body.actor,
         hitl_event=True,
     )
-    _pending_hitl[task_id] = {"approved": True, "actor": body.actor}
+    from stores.task_store import update_task_status
+    await update_task_status(task_id, "hitl_approved")
     return {"task_id": task_id, "status": "approved"}
 
 
@@ -72,5 +75,6 @@ async def reject_hitl(task_id: str, body: HITLDecision) -> dict[str, str]:
         actor=body.actor,
         hitl_event=True,
     )
-    _pending_hitl[task_id] = {"approved": False, "actor": body.actor}
+    from stores.task_store import update_task_status
+    await update_task_status(task_id, "hitl_rejected")
     return {"task_id": task_id, "status": "rejected"}
