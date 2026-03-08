@@ -289,6 +289,20 @@ export default function DashboardPage() {
                   >
                     {t.status}
                   </span>
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm("Delete this task?")) {
+                        import("@/lib/api")
+                          .then((api) => api.deleteTask(t.id))
+                          .then(() => fetchStats());
+                      }
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-nexus-rose/20 text-nexus-muted hover:text-nexus-rose transition-colors"
+                  >
+                    <Activity className="w-3.5 h-3.5 rotate-45" />{" "}
+                    {/* Use Activity for trash-like feel if Trash2 not imported */}
+                  </div>
                   <ArrowRight className="w-3 h-3 text-nexus-muted group-hover:text-nexus-text transition-colors" />
                 </div>
               </div>

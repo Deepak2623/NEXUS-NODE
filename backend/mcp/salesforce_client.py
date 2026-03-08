@@ -28,9 +28,13 @@ async def _get_access_token() -> str:
     """
     settings = get_settings()
     token_url = f"{_base_url()}/services/oauth2/token"
+    
+    # Emergency Diagnostic
+    print(f"DEBUG_SF_CLIENT_ID_TYPE: {type(settings.salesforce_mcp_client_id)}")
+    
     data = {
         "grant_type": "client_credentials",
-        "client_id": settings.salesforce_mcp_client_id,
+        "client_id": str(settings.salesforce_mcp_client_id),
         "client_secret": settings.salesforce_mcp_client_secret.get_secret_value(),
     }
     verify_mode = not os.getenv("BYPASS_SSL_VERIFY", "0") == "1"
