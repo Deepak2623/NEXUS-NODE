@@ -6,6 +6,7 @@ Tasks survive server restarts and are queryable across multiple processes.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from datetime import datetime, timezone
 from typing import Any
@@ -37,9 +38,9 @@ async def create_task(task_id: str, task_text: str, actor: str = "user") -> dict
         "actor": actor,
         "status": "pending",
     }
-    result = client.table(_TABLE).insert(row).execute()
+    await asyncio.to_thread(client.table(_TABLE).insert(row).execute)
     logger.info("task_created", task_id=task_id, actor=actor)
-    return result.data[0] if result.data else row
+    return row
 
 
 async def get_task(task_id: str) -> dict[str, Any] | None:
@@ -52,7 +53,9 @@ async def get_task(task_id: str) -> dict[str, Any] | None:
         Task record dict or None if not found.
     """
     client = get_supabase_client()
-    result = client.table(_TABLE).select("*").eq("id", task_id).limit(1).execute()
+    result = await asyncio.to_thread(
+        client.table(_TABLE).select("*").eq("id", task_id).limit(1).execute
+    )
     return result.data[0] if result.data else None
 
 
@@ -81,12 +84,12 @@ async def update_task_status(
     if iteration is not None:
         patch["iteration"] = iteration
 
-    client.table(_TABLE).update(patch).eq("id", task_id).execute()
+    await asyncio.to_thread(client.table(_TABLE).update(patch).eq("id", task_id).execute)
     logger.info("task_updated", task_id=task_id, status=status)
 
 
-async def list_tasks(page: int = 1, page_size: int = 50, status_filter: str | None = None) -> list[dict[str, Any]]:
-    """Return recent tasks with pagination, optionally filtered by status.
+async def list_tasks(page: int = 1, page_size: int = 50, status_filter: str | None = None) -> dict[str, Any]:
+    """Return recent tasks with pagination and total count.
 
     Args:
         page: Page number (1-indexed).
@@ -94,15 +97,19 @@ async def list_tasks(page: int = 1, page_size: int = 50, status_filter: str | No
         status_filter: If set, filter to tasks with this status.
 
     Returns:
-        List of task record dicts, ordered by created_at descending.
+        Dict with 'tasks' (list) and 'total_count' (int).
     """
     client = get_supabase_client()
     offset = (page - 1) * page_size
-    query = client.table(_TABLE).select("*").order("created_at", desc=True).range(offset, offset + page_size - 1)
+    query = client.table(_TABLE).select("*", count="exact").order("created_at", desc=True).range(offset, offset + page_size - 1)
     if status_filter:
         query = query.eq("status", status_filter)
-    result = query.execute()
-    return result.data or []
+    
+    result = await asyncio.to_thread(query.execute)
+    return {
+        "tasks": result.data or [],
+        "total_count": result.count or 0
+    }
 
 
 async def delete_task(task_id: str) -> None:
@@ -112,17 +119,17 @@ async def delete_task(task_id: str) -> None:
         task_id: UUID of the task to delete.
     """
     client = get_supabase_client()
-    client.table(_TABLE).delete().eq("id", task_id).execute()
+    await asyncio.to_thread(client.table(_TABLE).delete().eq("id", task_id).execute)
     logger.info("task_deleted", task_id=task_id)
 
 
 async def clear_tasks() -> None:
     """Delete ALL task records and ALL audit logs from the database (Atomic Purge)."""
     client = get_supabase_client()
-    # Wipe audit log first (dependent on tasks if RLS/foreign keys exist, though here they are loose)
-    client.table("audit_log").delete().neq("node", "non_existent").execute()
+    # Wipe audit log first
+    await asyncio.to_thread(client.table("audit_log").delete().neq("node", "non_existent").execute)
     # Wipe tasks
-    client.table(_TABLE).delete().neq("status", "non_existent").execute()
+    await asyncio.to_thread(client.table(_TABLE).delete().neq("status", "non_existent").execute)
     logger.warning("all_governance_data_purged")
 
 
@@ -133,5 +140,7 @@ async def count_pending_hitl() -> int:
         Integer count of 'hitl_wait' tasks.
     """
     client = get_supabase_client()
-    result = client.table(_TABLE).select("id", count="exact").eq("status", "hitl_wait").execute()
+    result = await asyncio.to_thread(
+        client.table(_TABLE).select("id", count="exact").eq("status", "hitl_wait").execute
+    )
     return result.count or 0

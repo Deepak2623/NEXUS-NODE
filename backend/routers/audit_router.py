@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Query
@@ -31,11 +32,16 @@ async def get_audit_log(
     offset = (page - 1) * page_size
     query = (
         client.table("audit_log")
-        .select("*")
+        .select("*", count="exact")
         .order("created_at", desc=True)
         .range(offset, offset + page_size - 1)
     )
     if task_id:
         query = query.eq("task_id", task_id)
-    response = query.execute()
-    return {"page": page, "page_size": page_size, "entries": response.data}
+    response = await asyncio.to_thread(query.execute)
+    return {
+        "page": page,
+        "page_size": page_size,
+        "entries": response.data,
+        "count": response.count or 0
+    }

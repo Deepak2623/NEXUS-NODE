@@ -345,7 +345,7 @@ export default function GovernancePage() {
             </button>
             <button
               onClick={() => setTaskPage(taskPage + 1)}
-              disabled={tasks.length < 50}
+              disabled={taskPage * 50 >= totalTasks}
               className="px-3 py-1 rounded-lg border border-nexus-border hover:bg-white/5 transition-all disabled:opacity-20"
             >
               Next
@@ -484,7 +484,7 @@ export default function GovernancePage() {
               </button>
               <button
                 onClick={() => setPage(page + 1)}
-                disabled={entries.length < 50}
+                disabled={page * 50 >= totalAudit}
                 className="px-4 py-2 rounded-xl text-[10px] font-bold border border-nexus-border text-nexus-text hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 Next

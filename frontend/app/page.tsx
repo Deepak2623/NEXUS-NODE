@@ -28,13 +28,14 @@ export default function DashboardPage() {
     hitlEvents: "0",
   });
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
+  const [totalTasks, setTotalTasks] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchStats = useCallback(async () => {
     try {
       const [tasksRes, auditRes, healthRes] = await Promise.all([
         getTasks(currentPage, 20).catch(() => ({ tasks: [], count: 0 })),
-        getAuditLog(1, 10).catch(() => ({ entries: [] })),
+        getAuditLog(1, 10).catch(() => ({ entries: [], count: 0 })),
         fetch("/api/backend/health")
           .then((r) => r.json())
           .catch(() => ({ pending_hitl_count: 0 })),
@@ -42,11 +43,12 @@ export default function DashboardPage() {
 
       setStats({
         tasksToday: String((tasksRes as any).count || 0),
-        auditEntries: String((auditRes as any).entries?.length || 0),
+        auditEntries: String((auditRes as any).count || 0),
         hitlEvents: String(healthRes.pending_hitl_count || 0),
       });
 
       setRecentTasks((tasksRes as any).tasks || []);
+      setTotalTasks((tasksRes as any).count || 0);
     } catch (err) {
       console.error("Failed to load stats", err);
     }

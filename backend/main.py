@@ -409,8 +409,8 @@ async def list_all_tasks(
     Returns:
         Dict with tasks list.
     """
-    tasks = await list_tasks(page=page, page_size=page_size, status_filter=status)
-    return {"tasks": tasks, "count": len(tasks)}
+    result = await list_tasks(page=page, page_size=page_size, status_filter=status)
+    return {"tasks": result["tasks"], "count": result["total_count"]}
 
 
 @app.delete("/api/v1/tasks/{task_id}")
