@@ -14,7 +14,13 @@ import {
 import { clsx } from "clsx";
 import { MCPStatusBar } from "@/components/MCPStatusBar";
 import { ThoughtStream } from "@/components/ThoughtStream";
-import { runTask, getTasks, getAuditLog, clearTasks } from "@/lib/api";
+import {
+  runTask,
+  getTasks,
+  getAuditLog,
+  clearTasks,
+  deleteTask,
+} from "@/lib/api";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -296,9 +302,7 @@ export default function DashboardPage() {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (confirm("Delete this task?")) {
-                        import("@/lib/api")
-                          .then((api) => api.deleteTask(t.id))
-                          .then(() => fetchStats());
+                        deleteTask(t.id).then(() => fetchStats());
                       }
                     }}
                     className="p-1.5 rounded-lg hover:bg-nexus-rose/20 text-nexus-muted hover:text-nexus-rose transition-colors"

@@ -48,6 +48,8 @@ export default function GovernancePage() {
   const [taskPage, setTaskPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [totalTasks, setTotalTasks] = useState(0);
+  const [totalAudit, setTotalAudit] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -65,7 +67,7 @@ export default function GovernancePage() {
       if (showLoading) setLoading(true);
       try {
         const [auditRes, tasksRes, healthRes] = await Promise.all([
-          getAuditLog(page, 50).catch(() => ({ entries: [] })),
+          getAuditLog(page, 50).catch(() => ({ entries: [], count: 0 })),
           getTasks(taskPage, 50).catch(() => ({ tasks: [], count: 0 })),
           fetch("/api/backend/health")
             .then((r) => r.json())
@@ -73,7 +75,9 @@ export default function GovernancePage() {
         ]);
 
         setEntries((auditRes as any).entries ?? []);
+        setTotalAudit((auditRes as any).count ?? 0);
         setTasks((tasksRes as any).tasks ?? []);
+        setTotalTasks((tasksRes as any).count ?? 0);
         setPendingCount(healthRes.pending_hitl_count || 0);
       } catch (err) {
         console.error("Governance fetch failed", err);
@@ -192,13 +196,13 @@ export default function GovernancePage() {
         {[
           {
             label: "Total Operations",
-            value: String(entries.length),
+            value: String(totalAudit),
             icon: Hash,
             color: "text-nexus-accent",
           },
           {
             label: "Tasks Executed",
-            value: String(tasks.length),
+            value: String(totalTasks),
             icon: HistoryIcon,
             color: "text-nexus-cyan",
           },
@@ -433,34 +437,12 @@ export default function GovernancePage() {
                       <td className="px-5 py-4">
                         {entry.hitl_event ? (
                           <span className="flex items-center gap-1.5 text-nexus-amber font-bold">
-                            <Clock className="w-3 h-3" /> PENDING HITL
+                            <Shield className="w-3 h-3" /> HITL RECORD
                           </span>
                         ) : (
                           <span className="flex items-center gap-1.5 text-nexus-emerald font-bold">
                             <CheckCircle2 className="w-3 h-3" /> VERIFIED
                           </span>
-                        )}
-                      </td>
-                      <td className="px-5 py-4">
-                        {entry.hitl_event && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() =>
-                                handleHITL(entry.task_id, "approve")
-                              }
-                              className="px-3 py-1.5 rounded-lg bg-nexus-emerald/10 border border-nexus-emerald/30 text-nexus-emerald hover:bg-nexus-emerald/20 transition-all font-bold text-[10px]"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleHITL(entry.task_id, "reject")
-                              }
-                              className="px-3 py-1.5 rounded-lg bg-nexus-rose/10 border border-nexus-rose/30 text-nexus-rose hover:bg-nexus-rose/20 transition-all font-bold text-[10px]"
-                            >
-                              Reject
-                            </button>
-                          </div>
                         )}
                       </td>
                     </tr>
