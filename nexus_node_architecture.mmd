@@ -1,0 +1,45 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1e293b', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#3b82f6', 'lineColor': '#94a3b8', 'secondaryColor': '#0f172a', 'tertiaryColor': '#334155'}}}%%
+graph TD
+    classDef user fill:#6366f1,stroke:#4f46e5,stroke-width:2px,color:#fff,rx:10,ry:10;
+    classDef gov fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff,rx:5,ry:5;
+    classDef agent fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff,rx:5,ry:5;
+    classDef mcp fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff,rx:5,ry:5;
+    classDef db fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff,rx:5,ry:5;
+    classDef ui fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff,rx:5,ry:5;
+
+    subgraph "Frontend Layer (Next.js 15)"
+        User([🧑‍💻 User Input]):::user
+        UI([🖥️ Dashboard / Real-Time Visualizer]):::ui
+    end
+
+    subgraph "NEXUS-NODE Core (FastAPI & LangGraph)"
+        GovPre[🛡️ Governor Node: PII Scrubbing]:::gov
+        Plan[🧠 node_plan: Groq/Llama-3.3-70b]:::agent
+        Execute[⚡ node_execute: MCP Clients]:::agent
+        Verify[🔎 node_verify: Recursive Logic]:::agent
+        GovPost[🔐 Governor Node: SHA-256 Audit]:::gov
+        
+        GovPre -->|Sanitized Payload| Plan
+        Plan -->|Tool Calls| Execute
+        Execute -->|Raw Results| Verify
+        Verify -->|Needs Re-plan| Plan
+        Verify -->|Verification Success| GovPost
+    end
+
+    subgraph "External Integrations (MCP)"
+        GitHub[🐙 GitHub MCP]:::mcp
+        Slack[💬 Slack MCP]:::mcp
+        Salesforce[☁️ Salesforce MCP]:::mcp
+        
+        Execute -.->|Read/Write| GitHub
+        Execute -.->|Message| Slack
+        Execute -.->|Mutate/Verify| Salesforce
+    end
+
+    subgraph "Data & Audit Layer"
+        DB[(🗄️ Supabase Postgres\n+ Audit Log)]:::db
+    end
+
+    User ==>|WebSocket/SSE| GovPre
+    GovPost ==>|Immutable Hash| DB
+    GovPost ==>|Final Response Stream| UI
